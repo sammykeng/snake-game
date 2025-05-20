@@ -4,6 +4,7 @@
 #include <chrono>
 #include <ncurses.h>
 #include <locale.h>
+#include <vector>
 
 
 int nScreenWidth = 120;
@@ -39,6 +40,94 @@ enum Direction {
     DOWN,
     LEFT
 };
+
+// Thêm struct cho chướng ngại vật
+struct sObstacle {
+    int x;
+    int y;
+    int length;
+    bool isHorizontal;
+};
+
+// Thêm vector để lưu trữ các chướng ngại vật
+std::vector<sObstacle> obstacles;
+
+// Biến toàn cục cho thức ăn
+int nFoodX = 30;
+int nFoodY = 15;
+
+// Hàm kiểm tra xem một vị trí có phải là chướng ngại vật không
+bool isObstacle(int x, int y) {
+    for (const auto& obs : obstacles) {
+        if (obs.isHorizontal) {
+            if (y == obs.y && x >= obs.x && x < obs.x + obs.length) {
+                return true;
+            }
+        } else {
+            if (x == obs.x && y >= obs.y && y < obs.y + obs.length) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// Hàm tạo chướng ngại vật mới
+void createObstacle(GameLevel level, int score, const std::list<sSnakeSegment>& snake) {
+    sObstacle newObs;
+    int minLength, maxLength;
+    
+    // Xác định độ dài của chướng ngại vật dựa trên level
+    switch (level) {
+        case EASY:
+            minLength = 3;
+            maxLength = 5;
+            break;
+        case HARD:
+            minLength = 4;
+            maxLength = 6;
+            break;
+        case SUPER_HARD:
+            minLength = 5;
+            maxLength = 8;
+            break;
+    }
+    
+    newObs.length = minLength + (rand() % (maxLength - minLength + 1));
+    newObs.isHorizontal = (rand() % 2 == 0);
+    
+    // Tạo vị trí ngẫu nhiên cho chướng ngại vật
+    if (newObs.isHorizontal) {
+        newObs.x = 2 + (rand() % (nScreenWidth - newObs.length - 4));
+        newObs.y = 3 + (rand() % (nScreenHeight - 5));
+    } else {
+        newObs.x = 2 + (rand() % (nScreenWidth - 4));
+        newObs.y = 3 + (rand() % (nScreenHeight - newObs.length - 3));
+    }
+    
+    // Kiểm tra xem chướng ngại vật có trùng với thức ăn hoặc rắn không
+    bool isValid = true;
+    for (int i = 0; i < newObs.length; i++) {
+        int checkX = newObs.isHorizontal ? newObs.x + i : newObs.x;
+        int checkY = newObs.isHorizontal ? newObs.y : newObs.y + i;
+        
+        if (checkX == nFoodX && checkY == nFoodY) {
+            isValid = false;
+            break;
+        }
+        
+        for (const auto& segment : snake) {
+            if (checkX == segment.x && checkY == segment.y) {
+                isValid = false;
+                break;
+            }
+        }
+    }
+    
+    if (isValid) {
+        obstacles.push_back(newObs);
+    }
+}
 
 // Thêm hàm để lấy ký tự tương ứng với hướng di chuyển
 wchar_t getDirectionChar(Direction dir, bool isHead) {
@@ -232,16 +321,18 @@ int main()
         GameLevel currentLevel = showMenu();
         
         std::list<sSnakeSegment> snake = {{60,15},{61,15},{62,15},{63,15},{64,15},{65,15},{66,15},{67,15},{68,15},{69,15}};
-        int nFoodX = 30;
-        int nFoodY = 15;
         int nScore = 0;
         int nSnakeDirection = 3;
         bool bDead = false;
+        obstacles.clear(); // Xóa tất cả chướng ngại vật khi bắt đầu game mới
 
         while (!bDead)
         {
             auto t1 = std::chrono::system_clock::now();
             int currentSpeed = calculateSpeed(currentLevel, nScore);
+            
+            // Kiểm tra và tạo chướng ngại vật mới dựa trên điểm số
+            createObstacle(currentLevel, nScore, snake);
             
             while ((std::chrono::system_clock::now() - t1) < std::chrono::milliseconds(currentSpeed))
             {
@@ -310,6 +401,11 @@ int main()
                 }
                 else if (snake.front().y >= nScreenHeight) {
                     snake.front().y = 3;
+                }
+
+                // Kiểm tra va chạm với chướng ngại vật
+                if (isObstacle(snake.front().x, snake.front().y)) {
+                    bDead = true;
                 }
 
                 for (std::list<sSnakeSegment>::iterator i = snake.begin(); i != snake.end(); i++)
@@ -387,6 +483,15 @@ int main()
 
                 screen[nFoodY * nScreenWidth + nFoodX] = L'*';  // Thay $ bằng *
 
+                // Vẽ chướng ngại vật
+                for (const auto& obs : obstacles) {
+                    for (int i = 0; i < obs.length; i++) {
+                        int x = obs.isHorizontal ? obs.x + i : obs.x;
+                        int y = obs.isHorizontal ? obs.y : obs.y + i;
+                        screen[y * nScreenWidth + x] = L'#';
+                    }
+                }
+
                 if (bDead)
                 {
                     std::string gameOverStr = "PRESS 'SPACE' TO PLAY AGAIN";
@@ -413,6 +518,10 @@ int main()
                             attron(COLOR_PAIR(3));
                             mvaddch(y, x, ch);
                             attroff(COLOR_PAIR(3));
+                        } else if (ch == L'#') {
+                            attron(COLOR_PAIR(2)); // Sử dụng màu đỏ cho chướng ngại vật
+                            mvaddch(y, x, ch);
+                            attroff(COLOR_PAIR(2));
                         } else if (y == 1 && x >= 5 && x < 5 + scoreStr.size()) {
                             attron(COLOR_PAIR(5));
                             mvaddch(y, x, ch);
