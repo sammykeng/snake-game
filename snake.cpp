@@ -5,6 +5,7 @@
 #include <ncurses.h>
 #include <locale.h>
 #include <vector>
+#include <cstdio>
 
 
 int nScreenWidth = 120;
@@ -74,6 +75,31 @@ bool isObstacle(int x, int y) {
 
 // Hàm tạo chướng ngại vật mới
 void createObstacle(GameLevel level, int score, const std::list<sSnakeSegment>& snake) {
+    // Xác định điểm bắt đầu spawn chướng ngại vật cho mỗi level
+    int startScore;
+    switch (level) {
+        case EASY:
+            startScore = 7;
+            break;
+        case HARD:
+            startScore = 5;
+            break;
+        case SUPER_HARD:
+            startScore = 3;
+            break;
+        default:
+            startScore = 7;
+    }
+
+    // Nếu điểm số chưa đạt ngưỡng, không tạo chướng ngại vật
+    if (score < startScore) {
+        return;
+    }
+
+    // Tính số lượng chướng ngại vật cần tạo
+    int numObstacles = score - startScore + 1;
+    
+    // Tạo chướng ngại vật mới
     sObstacle newObs;
     int minLength, maxLength;
     
@@ -93,8 +119,13 @@ void createObstacle(GameLevel level, int score, const std::list<sSnakeSegment>& 
             break;
     }
     
-    newObs.length = minLength + (rand() % (maxLength - minLength + 1));
     newObs.isHorizontal = (rand() % 2 == 0);
+    // Nếu là chướng ngại vật ngang, đặt độ dài cố định là 4
+    if (newObs.isHorizontal) {
+        newObs.length = 4;
+    } else {
+        newObs.length = minLength + (rand() % (maxLength - minLength + 1));
+    }
     
     // Tạo vị trí ngẫu nhiên cho chướng ngại vật
     if (newObs.isHorizontal) {
@@ -250,34 +281,56 @@ GameLevel showMenu() {
 int calculateSpeed(GameLevel level, int score) {
     int baseSpeed;
     int minSpeed;
+    int speedDecrease;
     
     switch (level) {
         case EASY:
             baseSpeed = 80;   // Tốc độ ban đầu
-            minSpeed = 30;    // Tốc độ tối thiểu
+            minSpeed = 40;    // Tốc độ tối thiểu
+            speedDecrease = 2; // Giảm 2ms mỗi điểm
             break;
         case HARD:
             baseSpeed = 50;   // Tốc độ ban đầu
             minSpeed = 15;    // Tốc độ tối thiểu
+            speedDecrease = 2; // Giảm 2ms mỗi điểm
             break;
         case SUPER_HARD:
             baseSpeed = 30;   // Tốc độ ban đầu
             minSpeed = 5;     // Tốc độ tối thiểu
+            speedDecrease = 3; // Giảm 3ms mỗi điểm
             break;
         default:
             baseSpeed = 80;
-            minSpeed = 30;
+            minSpeed = 40;
+            speedDecrease = 2;
     }
     
     // Tính toán tốc độ mới dựa trên điểm số
-    // Mỗi 2 điểm sẽ giảm tốc độ đi 5ms, nhưng không được nhỏ hơn minSpeed
-    int newSpeed = baseSpeed - (score / 2) * 5;
+    int newSpeed = baseSpeed - (score * speedDecrease);
     if (newSpeed < minSpeed) {
         newSpeed = minSpeed;
     }
     
     timeout(newSpeed);
     return newSpeed;
+}
+
+// Thêm hàm để lưu điểm cao vào file
+void saveHighScores() {
+    FILE* file = fopen("../highscores.dat", "wb");  // Sử dụng đường dẫn tương đối từ thư mục snakegame
+    if (file != nullptr) {
+        fwrite(highScores, sizeof(int), 3, file);
+        fclose(file);
+    }
+}
+
+// Thêm hàm để đọc điểm cao từ file
+void loadHighScores() {
+    FILE* file = fopen("../highscores.dat", "rb");  // Sử dụng đường dẫn tương đối từ thư mục snakegame
+    if (file != nullptr) {
+        fread(highScores, sizeof(int), 3, file);
+        fclose(file);
+    }
 }
 
 int main()
@@ -315,6 +368,9 @@ int main()
         screen[i] = L' ';
     }
 
+    // Thêm dòng này sau khi khởi tạo highScores
+    loadHighScores();  // Đọc điểm cao từ file khi khởi động
+    
     while (1)
     {
         // Hiển thị menu và lấy level được chọn
@@ -325,6 +381,7 @@ int main()
         int nSnakeDirection = 3;
         bool bDead = false;
         obstacles.clear(); // Xóa tất cả chướng ngại vật khi bắt đầu game mới
+        int previousScore = 0;  // Thêm biến này vào đầu vòng lặp game
 
         while (!bDead)
         {
@@ -332,7 +389,10 @@ int main()
             int currentSpeed = calculateSpeed(currentLevel, nScore);
             
             // Kiểm tra và tạo chướng ngại vật mới dựa trên điểm số
-            createObstacle(currentLevel, nScore, snake);
+            if (nScore > previousScore) {
+                createObstacle(currentLevel, nScore, snake);
+                previousScore = nScore;
+            }
             
             while ((std::chrono::system_clock::now() - t1) < std::chrono::milliseconds(currentSpeed))
             {
@@ -359,16 +419,36 @@ int main()
                 switch (nSnakeDirection)
                 {
                 case 0: 
-                    snake.push_front({snake.front().x, snake.front().y - 1});
+                    {
+                        sSnakeSegment newSegment;
+                        newSegment.x = snake.front().x;
+                        newSegment.y = snake.front().y - 1;
+                        snake.push_front(newSegment);
+                    }
                     break;
                 case 1: 
-                snake.push_front({snake.front().x + 1, snake.front().y });
+                    {
+                        sSnakeSegment newSegment;
+                        newSegment.x = snake.front().x + 1;
+                        newSegment.y = snake.front().y;
+                        snake.push_front(newSegment);
+                    }
                     break;
                 case 2: 
-                snake.push_front({snake.front().x, snake.front().y + 1});
+                    {
+                        sSnakeSegment newSegment;
+                        newSegment.x = snake.front().x;
+                        newSegment.y = snake.front().y + 1;
+                        snake.push_front(newSegment);
+                    }
                     break;
                 case 3: 
-                snake.push_front({snake.front().x - 1, snake.front().y});
+                    {
+                        sSnakeSegment newSegment;
+                        newSegment.x = snake.front().x - 1;
+                        newSegment.y = snake.front().y;
+                        snake.push_front(newSegment);
+                    }
                     break;
                 default:
                     break;
@@ -545,12 +625,15 @@ int main()
         
         while (getch() != ' ');
 
-        // Cập nhật điểm cao nhất khi game kết thúc
+        // Thêm dòng này trước khi cập nhật điểm cao
         if (nScore > highScores[currentLevel]) {
             highScores[currentLevel] = nScore;
+            saveHighScores();  // Lưu điểm cao vào file mỗi khi có điểm mới
         }
     }
 
+    // Thêm dòng này trước khi kết thúc chương trình
+    saveHighScores();  // Lưu điểm cao vào file khi tắt chương trình
     endwin();
     return 0;
 }
