@@ -201,6 +201,30 @@ snakegame/menu.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/snake_game.dir/build.make CMakeFiles/snake_game.dir/snakegame/menu.cpp.s
 .PHONY : snakegame/menu.cpp.s
 
+snakegame/obstacle_manager.o: snakegame/obstacle_manager.cpp.o
+.PHONY : snakegame/obstacle_manager.o
+
+# target to build an object file
+snakegame/obstacle_manager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/snake_game.dir/build.make CMakeFiles/snake_game.dir/snakegame/obstacle_manager.cpp.o
+.PHONY : snakegame/obstacle_manager.cpp.o
+
+snakegame/obstacle_manager.i: snakegame/obstacle_manager.cpp.i
+.PHONY : snakegame/obstacle_manager.i
+
+# target to preprocess a source file
+snakegame/obstacle_manager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/snake_game.dir/build.make CMakeFiles/snake_game.dir/snakegame/obstacle_manager.cpp.i
+.PHONY : snakegame/obstacle_manager.cpp.i
+
+snakegame/obstacle_manager.s: snakegame/obstacle_manager.cpp.s
+.PHONY : snakegame/obstacle_manager.s
+
+# target to generate assembly for a file
+snakegame/obstacle_manager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/snake_game.dir/build.make CMakeFiles/snake_game.dir/snakegame/obstacle_manager.cpp.s
+.PHONY : snakegame/obstacle_manager.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -219,6 +243,9 @@ help:
 	@echo "... snakegame/menu.o"
 	@echo "... snakegame/menu.i"
 	@echo "... snakegame/menu.s"
+	@echo "... snakegame/obstacle_manager.o"
+	@echo "... snakegame/obstacle_manager.i"
+	@echo "... snakegame/obstacle_manager.s"
 .PHONY : help
 
 

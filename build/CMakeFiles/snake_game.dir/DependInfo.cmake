@@ -11,6 +11,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/Users/thutrang/Desktop/snake/snakegame/game.cpp" "CMakeFiles/snake_game.dir/snakegame/game.cpp.o" "gcc" "CMakeFiles/snake_game.dir/snakegame/game.cpp.o.d"
   "/Users/thutrang/Desktop/snake/snakegame/main.cpp" "CMakeFiles/snake_game.dir/snakegame/main.cpp.o" "gcc" "CMakeFiles/snake_game.dir/snakegame/main.cpp.o.d"
   "/Users/thutrang/Desktop/snake/snakegame/menu.cpp" "CMakeFiles/snake_game.dir/snakegame/menu.cpp.o" "gcc" "CMakeFiles/snake_game.dir/snakegame/menu.cpp.o.d"
+  "/Users/thutrang/Desktop/snake/snakegame/obstacle_manager.cpp" "CMakeFiles/snake_game.dir/snakegame/obstacle_manager.cpp.o" "gcc" "CMakeFiles/snake_game.dir/snakegame/obstacle_manager.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.
