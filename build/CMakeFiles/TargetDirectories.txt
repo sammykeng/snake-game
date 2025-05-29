@@ -1,0 +1,3 @@
+/Users/thutrang/Desktop/snake/build/CMakeFiles/snake_game.dir
+/Users/thutrang/Desktop/snake/build/CMakeFiles/edit_cache.dir
+/Users/thutrang/Desktop/snake/build/CMakeFiles/rebuild_cache.dir
