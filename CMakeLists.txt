@@ -16,6 +16,7 @@ set(SOURCES
     snakegame/main.cpp
     snakegame/game.cpp
     snakegame/menu.cpp
+    snakegame/obstacle_manager.cpp
 )
 
 # Create executable
