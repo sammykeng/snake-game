@@ -1,6 +1,7 @@
 # Compiler và flags
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall -Wextra
+
 # Thêm đường dẫn đến OpenCV
 OPENCV_CFLAGS = $(shell pkg-config --cflags opencv4)
 OPENCV_LIBS = $(shell pkg-config --libs opencv4)
@@ -33,4 +34,7 @@ $(OBJS): %.o: %.cpp
 clean:
 	rm -f $(OBJS) $(TARGET)
 
-.PHONY: all clean
+# Rule để rebuild
+rebuild: clean all
+
+.PHONY: all clean rebuild
